@@ -1,0 +1,18 @@
+{
+  "name": "dynamic-import-retry-plugin",
+  "version": "1.0.0",
+  "description": "a webpack plugin stands for rewrite built-in function which loads dynamic chucks and providing retry.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webpack",
+    "dynamic",
+    "import",
+    "cdn",
+    "retry"
+  ],
+  "author": "moxhe",
+  "license": "MIT"
+}

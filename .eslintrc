@@ -1,0 +1,6 @@
+{
+  "extends": "eslint-config-imweb",
+  "rules": {
+    "import/prefer-default-export": false
+  }
+}
