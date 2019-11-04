@@ -21,23 +21,23 @@ function objectifyEntry(entry) {
 
 function getJSContent(cdns) {
   return `
-const cdns = ${JSON.stringify(cdns)};
+var cdns = ${JSON.stringify(cdns)};
 
-const originalCDNPrefix = __webpack_public_path__;
-const originalLoadChunk = __webpack_chunk_load__;
+var originalCDNPrefix = __webpack_public_path__;
+var originalLoadChunk = __webpack_chunk_load__;
 
-__webpack_chunk_load__ = (id) => {
-  let n = cdns.length;
+__webpack_chunk_load__ = function(id) {
+  var n = cdns.length;
   return (function tryCdn() {
-    if (n === -1) {
+    if (n === 0) {
       return originalLoadChunk(id);
     }
 
-    return originalLoadChunk(id).catch(() => {
-      __webpack_public_path__ = cdns[n--];
+    return originalLoadChunk(id).catch(function() {
+      __webpack_public_path__ = cdns[--n];
       return tryCdn();
     });
-  }()).finally(() => {
+  }()).finally(function() {
     __webpack_public_path__ = originalCDNPrefix;
   });
 };
