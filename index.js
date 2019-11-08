@@ -19,7 +19,7 @@ function objectifyEntry(entry) {
   return entry;
 }
 
-function getJSContent(cdns) {
+function getJSContent(cdns, hooks) {
   return `
 var cdns = ${JSON.stringify(cdns)};
 
@@ -28,13 +28,35 @@ var originalLoadChunk = __webpack_chunk_load__;
 
 __webpack_chunk_load__ = function(id) {
   var n = cdns.length;
+  var exec = function() {
+    var args = [].slice.call(arguments);
+    var fn = args[0];
+
+    if (typeof fn === 'function') {
+      fn.call(this, args.slice(1));
+    }
+  };
   return (function tryCdn() {
     if (n === 0) {
-      return originalLoadChunk(id);
+      return originalLoadChunk(id).catch(function(e) {
+        if (cdns.length !== 0) {
+          exec(${hooks.chunkRetryLoadFail}, id);
+        }
+        return Promise.reject(e);
+      });
     }
 
     return originalLoadChunk(id).catch(function() {
       __webpack_public_path__ = cdns[--n];
+
+      exec(${hooks.chunkRetryLoad}, id);
+      if (cdns.length === n + 1) {
+        return tryCdn().then(function(m) {
+          exec(${hooks.chunkRetryLoadSucc}, id);
+          return m;
+        });
+      }
+
       return tryCdn();
     });
   }()).finally(function() {
@@ -44,13 +66,20 @@ __webpack_chunk_load__ = function(id) {
   `;
 }
 
+const defaultHooks = {
+  chunkRetryLoad: '__chunkRetryLoad__',
+  chunkRetryLoadSucc: '__chunkRetryLoadSucc__',
+  chunkRetryLoadFail: '__chunkRetryLoadFail__',
+};
+
 module.exports = class DynamicImportRetryPlugin {
   constructor(options) {
-    const { cdns, includes, excludes } = options;
+    const { cdns, includes, excludes, hooks } = options;
 
     this.cdns = cdns;
     this.pattern = { includes, excludes };
-    fs.writeFileSync(JS_PATH, getJSContent(this.cdns));
+    this.hooks = Object.assign({}, defaultHooks, hooks);
+    fs.writeFileSync(JS_PATH, getJSContent(this.cdns, this.hooks));
   }
 
   apply(compiler) {
