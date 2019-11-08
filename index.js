@@ -33,7 +33,9 @@ __webpack_chunk_load__ = function(id) {
     var fn = args[0];
 
     if (typeof fn === 'function') {
-      fn.call(this, args.slice(1));
+      try {
+        fn.call(this, args.slice(1));
+      } catch(e) {}
     }
   };
   return (function tryCdn() {
