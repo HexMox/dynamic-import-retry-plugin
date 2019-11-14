@@ -69,9 +69,9 @@ __webpack_chunk_load__ = function(id) {
 }
 
 const defaultHooks = {
-  chunkRetryLoad: '__chunkRetryLoad__',
-  chunkRetryLoadSucc: '__chunkRetryLoadSucc__',
-  chunkRetryLoadFail: '__chunkRetryLoadFail__',
+  chunkRetryLoad: 'window.__chunkRetryLoad__',
+  chunkRetryLoadSucc: 'window.__chunkRetryLoadSucc__',
+  chunkRetryLoadFail: 'window.__chunkRetryLoadFail__',
 };
 
 module.exports = class DynamicImportRetryPlugin {
