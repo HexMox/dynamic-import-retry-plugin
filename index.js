@@ -40,10 +40,14 @@ __webpack_chunk_load__ = function(id) {
   };
   return (function tryCdn() {
     if (n === 0) {
-      return originalLoadChunk(id).catch(function(e) {
+      return originalLoadChunk(id).then(function(m) {
+        __webpack_public_path__ = originalCDNPrefix;
+        return m;
+      }).catch(function(e) {
         if (cdns.length !== 0) {
           exec(${hooks.chunkRetryLoadFail}, id);
         }
+        __webpack_public_path__ = originalCDNPrefix;
         return Promise.reject(e);
       });
     }
@@ -61,9 +65,7 @@ __webpack_chunk_load__ = function(id) {
 
       return tryCdn();
     });
-  }()).finally(function() {
-    __webpack_public_path__ = originalCDNPrefix;
-  });
+  }());
 };
   `;
 }
