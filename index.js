@@ -1,9 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
-const JS_PATH = path.resolve(__dirname, './import-retry.js');
 const WEBPACK_CONFIG_PATH = process.cwd();
-const WEBPACK_JS_PATH = `./${path.relative(WEBPACK_CONFIG_PATH, JS_PATH)}`;
 
 function isProduction(compilerOptions) {
   return compilerOptions.mode === 'production' || process.env.NODE_ENV === 'production';
@@ -79,11 +78,21 @@ const defaultHooks = {
 module.exports = class DynamicImportRetryPlugin {
   constructor(options) {
     const { cdns, includes, excludes, hooks } = options;
+    if (!cdns || !cdns.length) {
+      throw new Error('Invalid retry hosts');
+    }
+    const hash = crypto.createHash('md5');
+
+    hash.update(JSON.stringify(cdns));
 
     this.cdns = cdns;
+    this.md5 = hash.digest('hex');
     this.pattern = { includes, excludes };
     this.hooks = Object.assign({}, defaultHooks, hooks);
-    fs.writeFileSync(JS_PATH, getJSContent(this.cdns, this.hooks));
+
+    this.jsPath = path.resolve(__dirname, `./import-retry.${this.md5}.js`);
+    this.webpackJsPath = `./${path.relative(WEBPACK_CONFIG_PATH, this.jsPath)}`;
+    fs.writeFileSync(this.jsPath, getJSContent(this.cdns, this.hooks));
   }
 
   apply(compiler) {
@@ -98,7 +107,7 @@ module.exports = class DynamicImportRetryPlugin {
           v = [v];
         }
 
-        entry[k] = [WEBPACK_JS_PATH].concat(v);
+        entry[k] = [this.webpackJsPath].concat(v);
       });
     }
   }
